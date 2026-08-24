@@ -1,8 +1,8 @@
 {
   "name": "po-requisition-form",
-  "version": "2.0.0",
+  "version": "3.0.0",
   "private": true,
-  "description": "Purchase order requisition form on Netlify: static frontend + Netlify Functions + Netlify Blobs storage.",
+  "description": "Purchase order requisition form on Netlify: static frontend + Netlify Functions, Netlify Blobs for Excel exports, and email-to-finance via Resend for submissions.",
   "scripts": {
     "dev": "netlify dev"
   },

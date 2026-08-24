@@ -302,6 +302,12 @@ body {
   box-shadow: 0 0 0 3px rgba(29, 53, 87, 0.12);
 }
 
+.items-table input:disabled {
+  background: #F2F1EC;
+  color: var(--muted);
+  cursor: not-allowed;
+}
+
 .items-table .num-input {
   font-family: var(--font-mono);
   text-align: right;

@@ -55,6 +55,8 @@
   var itemsTableBody = document.getElementById("itemsTableBody");
   var addItemBtn = document.getElementById("addItemBtn");
   var deliveryCostInput = document.getElementById("deliveryCost");
+  var vatRegisteredSelect = document.getElementById("vatRegistered");
+  var requisitionForm = document.getElementById("requisitionForm");
   var submitBtn = document.getElementById("submitBtn");
   var exportBtn = document.getElementById("exportBtn");
   var statusMessage = document.getElementById("statusMessage");
@@ -150,6 +152,11 @@
       input.addEventListener("input", recalculate);
     });
 
+    tr.querySelector(".js-recovery").addEventListener("change", function () {
+      updateRecoveryFields(tr);
+    });
+    updateRecoveryFields(tr);
+
     tr.querySelector(".js-remove").addEventListener("click", function () {
       tr.parentNode.removeChild(tr);
       enforceMinimumRow();
@@ -158,6 +165,29 @@
 
     recalculate();
     return tr;
+  }
+
+  // Recovery = Yes: details/reason are required for the requisition to be
+  // complete. Recovery = No (or unset): those fields don't apply, so they're
+  // disabled and cleared rather than left as stale, ignorable text.
+  function updateRecoveryFields(row) {
+    var recoveryValue = row.querySelector(".js-recovery").value;
+    var detailsInput = row.querySelector(".js-recovery-details");
+    var reasonInput = row.querySelector(".js-reason");
+
+    if (recoveryValue === "Yes") {
+      detailsInput.disabled = false;
+      reasonInput.disabled = false;
+      detailsInput.required = true;
+      reasonInput.required = true;
+    } else {
+      detailsInput.value = "";
+      reasonInput.value = "";
+      detailsInput.required = false;
+      reasonInput.required = false;
+      detailsInput.disabled = true;
+      reasonInput.disabled = true;
+    }
   }
 
   function enforceMinimumRow() {
@@ -172,7 +202,12 @@
      Calculations
      --------------------------------------------------------------- */
 
+  function isVatRegistered() {
+    return !vatRegisteredSelect || vatRegisteredSelect.value !== "no";
+  }
+
   function recalculate() {
+    var vatActive = isVatRegistered();
     var subtotal = 0;
     var vatTotal = 0;
 
@@ -181,7 +216,7 @@
       var qty = toNumber(row.querySelector(".js-qty").value);
       var unitPrice = toNumber(row.querySelector(".js-unit-price").value);
       var net = qty * unitPrice;
-      var vat = net * VAT_RATE;
+      var vat = vatActive ? net * VAT_RATE : 0;
 
       row.querySelector(".js-net").textContent = currency(net);
       row.querySelector(".js-vat").textContent = currency(vat);
@@ -191,13 +226,20 @@
     });
 
     var deliveryCost = toNumber(deliveryCostInput.value);
-    vatTotal += deliveryCost * VAT_RATE;
+    if (vatActive) {
+      vatTotal += deliveryCost * VAT_RATE;
+    }
 
     var total = subtotal + deliveryCost + vatTotal;
 
     document.getElementById("totalSubtotal").textContent = currency(subtotal);
     document.getElementById("totalVat").textContent = currency(vatTotal);
     document.getElementById("totalGrand").textContent = currency(total);
+
+    var vatLabel = document.getElementById("vatLabel");
+    if (vatLabel) {
+      vatLabel.textContent = vatActive ? "VAT (20%)" : "VAT (not registered)";
+    }
 
     lastTotals = { subtotal: subtotal, deliveryCost: deliveryCost, vatTotal: vatTotal, total: total };
 
@@ -214,10 +256,12 @@
   }
 
   function collectItems() {
+    var vatActive = isVatRegistered();
     var items = [];
     itemsTableBody.querySelectorAll("tr").forEach(function (row) {
       var qty = toNumber(row.querySelector(".js-qty").value);
       var unitPrice = toNumber(row.querySelector(".js-unit-price").value);
+      var net = qty * unitPrice;
       items.push({
         description: row.querySelector(".js-description").value.trim(),
         costType: row.querySelector(".js-cost-type").value,
@@ -226,8 +270,8 @@
         reason: row.querySelector(".js-reason").value.trim(),
         qty: qty,
         unitPrice: unitPrice,
-        net: qty * unitPrice,
-        vat: qty * unitPrice * VAT_RATE
+        net: net,
+        vat: vatActive ? net * VAT_RATE : 0
       });
     });
     return items;
@@ -281,12 +325,17 @@
   }
 
   /* ---------------------------------------------------------------
-     Submit (save to SQLite via the backend)
+     Submit (build a PDF and email it to finance)
      --------------------------------------------------------------- */
 
   function submitForm() {
+    if (requisitionForm && !requisitionForm.reportValidity()) {
+      showStatus("error", "Please fill in the required recovery details before sending.");
+      return;
+    }
+
     var payload = getFormData();
-    setBusy(submitBtn, true, "Saving\u2026", "Submit requisition");
+    setBusy(submitBtn, true, "Sending\u2026", "Email requisition");
 
     fetch("/api/submit", {
       method: "POST",
@@ -296,19 +345,19 @@
       .then(function (response) {
         return response.json().then(function (body) {
           if (!response.ok || !body.ok) {
-            throw new Error(body.error || "Could not save the requisition.");
+            throw new Error(body.error || "Could not email the requisition.");
           }
           return body;
         });
       })
       .then(function (body) {
-        showStatus("success", "Saved to the database as requisition #" + body.id + ".");
+        showStatus("success", "Emailed the requisition to " + body.sentTo + ".");
       })
       .catch(function (err) {
-        showStatus("error", err.message || "Something went wrong saving the form.");
+        showStatus("error", err.message || "Something went wrong emailing the form.");
       })
       .finally(function () {
-        setBusy(submitBtn, false, "Saving\u2026", "Submit requisition");
+        setBusy(submitBtn, false, "Sending\u2026", "Email requisition");
       });
   }
 
@@ -317,6 +366,11 @@
      --------------------------------------------------------------- */
 
   function exportForm() {
+    if (requisitionForm && !requisitionForm.reportValidity()) {
+      showStatus("error", "Please fill in the required recovery details before exporting.");
+      return;
+    }
+
     var payload = getFormData();
     setBusy(exportBtn, true, "Exporting\u2026", "Export to Excel");
 
@@ -358,6 +412,7 @@
 
     addItemBtn.addEventListener("click", createRow);
     deliveryCostInput.addEventListener("input", recalculate);
+    if (vatRegisteredSelect) vatRegisteredSelect.addEventListener("change", recalculate);
 
     if (submitBtn) submitBtn.addEventListener("click", submitForm);
     if (exportBtn) exportBtn.addEventListener("click", exportForm);

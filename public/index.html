@@ -11,7 +11,7 @@
 </head>
 <body>
 
-<div class="sheet">
+<form class="sheet" id="requisitionForm">
 
   <!-- ===================== HEADER ===================== -->
   <header class="po-header">
@@ -132,7 +132,7 @@
       </table>
     </div>
 
-    <p class="hint">VAT is calculated per line at the standard rate (20%). Add as many items as you need &mdash; totals update automatically.</p>
+    <p class="hint">VAT is calculated per line at the standard rate (20%), or left at &pound;0.00 if the vendor isn't VAT registered. Add as many items as you need &mdash; totals update automatically. If recovery from client is Yes, the recovery details are required; if No, those fields are disabled.</p>
   </section>
 
   <!-- ===================== TOTALS ===================== -->
@@ -174,7 +174,7 @@
           </div>
         </div>
         <div class="totals__row">
-          <span>VAT (20%)</span>
+          <span id="vatLabel">VAT (20%)</span>
           <span id="totalVat">&pound;0.00</span>
         </div>
         <div class="totals__row totals__row--total">
@@ -184,7 +184,7 @@
 
         <div class="totals__actions">
           <button type="button" class="btn btn--ghost" id="exportBtn">Export to Excel</button>
-          <button type="button" class="btn btn--primary btn--wide" id="submitBtn">Submit requisition</button>
+          <button type="button" class="btn btn--primary btn--wide" id="submitBtn">Email requisition</button>
         </div>
 
         <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
@@ -192,7 +192,7 @@
     </div>
   </section>
 
-</div>
+</form>
 
 <script src="script.js"></script>
 </body>
