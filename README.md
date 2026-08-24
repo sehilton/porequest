@@ -1,76 +1,58 @@
-# Purchase Order Requisition Form — Netlify edition
+# Purchase Order Requisition Form
 
-Same form as before, rebuilt to run natively on Netlify:
+A self-contained requisition form: fill it out in the browser, submit it to a
+local SQLite database, or export it to an Excel file. No npm packages
+required — everything runs on Node's built-in modules.
 
-- **Frontend** — `public/index.html`, `public/styles.css`, `public/script.js`
-  (unchanged from the standalone version; still plain HTML/CSS/JS).
-- **Backend** — Netlify Functions in `netlify/functions/`, one per route.
-- **Storage** — [Netlify Blobs](https://docs.netlify.com/build/data-and-storage/netlify-blobs/),
-  Netlify's built-in persistent object storage. It replaces both the SQLite
-  file and the local `uploads/` folder from the original version — Netlify
-  Functions don't have a writable disk that survives between requests, so
-  neither of those would have worked here.
+## Requirements
 
-## Why the previous version broke on Netlify
+- **Node.js 22.5 or later** (uses the built-in `node:sqlite` module, which
+  ships behind no flag from Node 22.5 onward). Check your version with
+  `node --version`. If you're on an older Node 22 build and see an error
+  about `node:sqlite`, run the server with
+  `node --experimental-sqlite server.js` instead.
 
-Netlify only serves static files and short-lived serverless functions; it
-doesn't run an always-on Node process. The old `server.js` never ran at all —
-`fetch('/api/submit')` hit Netlify's page-not-found fallback (your site's
-`index.html`), which is why the browser tried to parse `<!DOCTYPE html>` as
-JSON.
+No `npm install` step is needed — the server, database layer, and Excel
+writer are built entirely from Node's standard library.
 
-## Routes
-
-| Route | Function | Storage |
-|---|---|---|
-| `POST /api/submit` | `netlify/functions/submit.mjs` | writes a JSON record to the `requisitions` Blobs store |
-| `GET /api/submissions` | `netlify/functions/submissions.mjs` | lists the 50 most recent requisitions |
-| `POST /api/export` | `netlify/functions/export.mjs` | builds an `.xlsx` and writes it to the `uploads` Blobs store |
-| `GET /api/download/:filename` | `netlify/functions/download.mjs` | streams a saved export back to the browser |
-
-The Excel file itself is built by `netlify/functions/_shared/xlsx-writer.mjs`
-— a small, dependency-free `.xlsx` writer (it assembles the OOXML zip using
-only Node's built-in `zlib`), carried over unchanged from the standalone
-version.
-
-## Deploying
-
-1. Push this folder to a Git repo and connect it in the Netlify UI (or run
-   `netlify deploy --prod` from the Netlify CLI). Netlify reads
-   `netlify.toml`, publishes `public/` as the site, and deploys everything
-   in `netlify/functions/` automatically.
-2. On the first deploy, Netlify installs `@netlify/blobs` from
-   `package.json` — no other setup, environment variables, or database
-   provisioning is needed. Blobs storage is provisioned automatically per
-   site.
-
-That's it — no database to create, no connection string to configure.
-
-## Local development
+## Running it
 
 ```bash
-npx netlify-cli dev
+node server.js
 ```
 
-(or `npm run dev` if you have `netlify-cli` installed). This serves
-`public/` and runs the functions locally, including a local emulation of
-Netlify Blobs, so Submit and Export both work the same way they will in
-production.
+Then open **http://localhost:3000** in your browser. (Opening `index.html`
+directly as a file won't work anymore — the Submit and Export buttons need
+the server running to save data.)
 
-## Inspecting stored data
+## What each button does
 
-Blobs aren't a SQL database, so there's no `sqlite3` shell for them. Options:
+- **Submit requisition** — sends the form to `POST /api/submit`, which
+  writes the header fields into a `requisitions` table and every line item
+  into a `line_items` table inside `po_requisitions.db` (created
+  automatically in this folder on first run).
+- **Export to Excel** — sends the form to `POST /api/export`, which builds a
+  real `.xlsx` workbook and saves it into the `uploads/` folder (also
+  created automatically) as `requisition-<PO number>-<timestamp>.xlsx`. The
+  response also includes a `/uploads/<filename>` link if you want to
+  download the file straight from the browser.
 
-- The Netlify UI: **Project → Storage → Blobs**, browse the `requisitions`
-  and `uploads` stores directly.
-- `GET /api/submissions` returns the most recent requisitions as JSON.
-- `netlify blobs:list requisitions` / `netlify blobs:list uploads` via the
-  Netlify CLI.
+## Files
 
-## If you outgrow Blobs
+| File | Purpose |
+|---|---|
+| `index.html` / `styles.css` / `script.js` | The form itself |
+| `server.js` | HTTP server, static file hosting, and the `/api/*` routes |
+| `db.js` | SQLite schema + save/read helpers (`node:sqlite`) |
+| `xlsx-writer.js` | Dependency-free `.xlsx` builder (zips the OOXML parts with `node:zlib`) |
+| `po_requisitions.db` | The SQLite database (created on first submit) |
+| `uploads/` | Where exported spreadsheets land (created on first export) |
 
-Blobs stores whole JSON records and files — great for this form, but not
-built for SQL queries (filtering, joins, aggregates across requisitions). If
-that need shows up later, Netlify also offers a managed Postgres database
-(`@netlify/database`) that the functions here could be pointed at instead,
-without changing the frontend.
+## Inspecting the database
+
+Any SQLite browser works, or the command line:
+
+```bash
+sqlite3 po_requisitions.db "SELECT * FROM requisitions;"
+sqlite3 po_requisitions.db "SELECT * FROM line_items;"
+```
