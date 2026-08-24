@@ -1,6 +1,6 @@
 "use strict";
 
-const { createPageCanvas, assemblePdf, wrapText, textWidth } = require("../pdf-writer.cjs");
+const { createPageCanvas, assemblePdf, wrapText, textWidth } = require("./pdf-writer.cjs");
 
 var PAGE_W = 595.28;
 var PAGE_H = 841.89;
@@ -72,13 +72,6 @@ function drawHeaderBanner(doc, header) {
   canvas.fillRect(0, 0, PAGE_W, 92, NAVY);
   canvas.text(MARGIN, 22, "CHPK GROUP", { font: "Helvetica-Bold", size: 9, color: GOLD_SOFT });
   canvas.text(MARGIN, 36, "Purchase Order Requisition Form", { font: "Helvetica-Bold", size: 21, color: "#FFFFFF" });
-
-  var poLabel = "PO No.  " + (header.poNumber || "\u2014");
-  var vatLabel = "VAT registered  " + (header.vatRegistered === "no" ? "No" : "Yes");
-  var poW = textWidth(poLabel, "Helvetica", 10);
-  var vatW = textWidth(vatLabel, "Helvetica", 10);
-  canvas.text(PAGE_W - MARGIN - poW, 26, poLabel, { size: 10, color: "#FFFFFF" });
-  canvas.text(PAGE_W - MARGIN - vatW, 42, vatLabel, { size: 10, color: "#D8E0EA" });
 
   doc.cursorY = 112;
 }
