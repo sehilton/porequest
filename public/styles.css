@@ -582,3 +582,12 @@ body {
     transition: none !important;
   }
 }
+
+.field field--compact span {
+  color: black;
+}
+
+#vatRegistered {
+  background-color: blue !important;
+  border: 1px black solid;
+}

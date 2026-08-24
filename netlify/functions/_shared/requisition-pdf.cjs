@@ -302,6 +302,18 @@ function buildRequisitionPdf(data) {
 
   drawHeaderBanner(doc, header);
 
+  drawPanel(
+    doc,
+    "Requested by",
+    [
+      ["Name", header.requesterName],
+      ["Email", header.requesterEmail],
+      ["Approver email", header.approverEmail]
+    ],
+    MARGIN,
+    CONTENT_W
+  );
+
   drawTwoColumnPanels(doc, [
     {
       title: "Vendor",

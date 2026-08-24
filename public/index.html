@@ -1,199 +1,225 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Purchase Order Requisition Form</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="styles.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Purchase Order Requisition Form</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Source+Serif+4:opsz,wght@8..60,500;8..60,600;8..60,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
-<form class="sheet" id="requisitionForm">
+  <form class="sheet" id="requisitionForm">
 
-  <!-- ===================== HEADER ===================== -->
-  <header class="po-header">
-    <div class="po-header__title">
-      <span class="po-header__eyebrow">CHPK Group</span>
-      <h1>Purchase Order Requisition Form</h1>
-    </div>
-    <div class="po-header__meta">
-      <label class="field field--compact">
-        <span>PO No.</span>
-        <input type="text" id="poNumber" placeholder="Auto / manual">
-      </label>
-      <label class="field field--compact">
-        <span>VAT Registered?</span>
-        <select id="vatRegistered">
-          <option value="yes" selected>Yes</option>
-          <option value="no">No</option>
-        </select>
-      </label>
-    </div>
-  </header>
+    <!-- ===================== HEADER ===================== -->
+    <header class="po-header">
+      <div class="po-header__title">
+        <span class="po-header__eyebrow">CHPK Group</span>
+        <h1>Purchase Order Requisition Form</h1>
+      </div>
+    </header>
 
-  <!-- ===================== VENDOR + BUSINESS UNIT ===================== -->
-  <section class="grid-2">
-
-    <div class="panel">
-      <h2 class="panel__title">Vendor</h2>
+    <!-- ===================== REQUESTED BY ===================== -->
+    <section class="panel panel--wide">
+      <h2 class="panel__title">Requested by</h2>
       <div class="panel__body">
-        <label class="field">
-          <span>Vendor name</span>
-          <input type="text" id="vendorName" placeholder="e.g. Acme Supplies Ltd">
-        </label>
-        <label class="field">
-          <span>Vendor address</span>
-          <textarea id="vendorAddress" rows="3" placeholder="Street, town, postcode"></textarea>
-        </label>
-        <label class="field">
-          <span>Email</span>
-          <input type="email" id="vendorEmail" placeholder="finance@vendor.co.uk">
-        </label>
         <div class="field-row">
           <label class="field">
-            <span>Company reg.</span>
-            <input type="text" id="vendorCompanyReg" placeholder="00000000">
+            <span>Your name</span>
+            <input type="text" id="requesterName" placeholder="e.g. Jane Smith" required>
           </label>
           <label class="field">
-            <span>VAT number</span>
-            <input type="text" id="vendorVatNumber" placeholder="000000000">
-          </label>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2 class="panel__title">Order details</h2>
-      <div class="panel__body">
-        <label class="field">
-          <span>Business unit</span>
-          <select id="businessUnit">
-            <option value="">Select business unit&hellip;</option>
-          </select>
-        </label>
-        <div class="field-row">
-          <label class="field">
-            <span>Company no.</span>
-            <input type="text" id="businessUnitCoNo" readonly tabindex="-1">
-          </label>
-          <label class="field">
-            <span>VAT no.</span>
-            <input type="text" id="businessUnitVat" readonly tabindex="-1">
-          </label>
-        </div>
-        <div class="field-row">
-          <label class="field">
-            <span>Purchase order date</span>
-            <input type="date" id="poDate">
-          </label>
-          <label class="field">
-            <span>Delivery date</span>
-            <input type="date" id="deliveryDate">
+            <span>Your email</span>
+            <input type="email" id="requesterEmail" placeholder="jane.smith@chpk.co.uk" required>
           </label>
         </div>
         <label class="field">
-          <span>Reference</span>
-          <input type="text" id="reference" placeholder="Project / job reference">
+          <span>Line manager's email (approver)</span>
+          <input type="email" id="approverEmail" placeholder="manager@chpk.co.uk" required>
         </label>
       </div>
-    </div>
+    </section>
 
-  </section>
+    <!-- ===================== VENDOR + BUSINESS UNIT ===================== -->
+    <section class="grid-2">
 
-  <!-- ===================== LINE ITEMS ===================== -->
-  <section class="panel panel--wide">
-    <div class="panel__title-row">
-      <h2 class="panel__title">Line items</h2>
-      <button type="button" class="btn btn--primary" id="addItemBtn">+ Add item</button>
-    </div>
-
-    <div class="items-table-wrap">
-      <table class="items-table" id="itemsTable">
-        <thead>
-          <tr>
-            <th class="col-desc">Description</th>
-            <th class="col-cost-type">Cost type</th>
-            <th class="col-recovery">Recovery from client</th>
-            <th class="col-recovery-details">Details of recovery</th>
-            <th class="col-reason">Reason for non-recovery</th>
-            <th class="col-qty">Qty</th>
-            <th class="col-price">Unit price</th>
-            <th class="col-net">Net</th>
-            <th class="col-vat">VAT</th>
-            <th class="col-remove"><span class="sr-only">Remove</span></th>
-          </tr>
-        </thead>
-        <tbody id="itemsTableBody">
-          <!-- rows injected by script.js -->
-        </tbody>
-      </table>
-    </div>
-
-    <p class="hint">VAT is calculated per line at the standard rate (20%), or left at &pound;0.00 if the vendor isn't VAT registered. Add as many items as you need &mdash; totals update automatically. If recovery from client is Yes, the recovery details are required; if No, those fields are disabled.</p>
-  </section>
-
-  <!-- ===================== TOTALS ===================== -->
-  <section class="grid-2">
-    <div class="panel">
-      <h2 class="panel__title">Delivery details</h2>
-      <div class="panel__body">
-        <label class="field">
-          <span>Delivery address</span>
-          <textarea id="deliveryAddress" rows="3" placeholder="Street, town, postcode"></textarea>
-        </label>
-        <label class="field">
-          <span>For the attention of</span>
-          <input type="text" id="deliveryAttention" placeholder="Recipient name / department">
-        </label>
-        <label class="field">
-          <span>Email</span>
-          <input type="email" id="deliveryEmail" placeholder="site@chpk.co.uk">
-        </label>
-        <label class="field">
-          <span>Delivery instructions</span>
-          <textarea id="deliveryInstructions" rows="3" placeholder="Access notes, goods-in hours, contact on arrival&hellip;"></textarea>
-        </label>
-      </div>
-    </div>
-
-    <div class="panel">
-      <h2 class="panel__title">Totals</h2>
-      <div class="panel__body totals">
-        <div class="totals__row">
-          <span>Subtotal</span>
-          <span id="totalSubtotal">&pound;0.00</span>
-        </div>
-        <div class="totals__row totals__row--input">
-          <label for="deliveryCost">Delivery cost</label>
-          <div class="totals__input">
-            <span class="totals__currency">&pound;</span>
-            <input type="number" id="deliveryCost" min="0" step="0.01" value="0.00">
+      <div class="panel">
+        <h2 class="panel__title">Vendor</h2>
+        <div class="panel__body">
+          <label class="field">
+            <span>Vendor name</span>
+            <input type="text" id="vendorName" placeholder="e.g. Acme Supplies Ltd">
+          </label>
+          <label class="field">
+            <span>Vendor address</span>
+            <textarea id="vendorAddress" rows="3" placeholder="Street, town, postcode"></textarea>
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" id="vendorEmail" placeholder="finance@vendor.co.uk">
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Company reg.</span>
+              <input type="text" id="vendorCompanyReg" placeholder="00000000">
+            </label>
+            <label class="field">
+              <span>VAT number</span>
+              <input type="text" id="vendorVatNumber" placeholder="000000000">
+            </label>
           </div>
         </div>
-        <div class="totals__row">
-          <span id="vatLabel">VAT (20%)</span>
-          <span id="totalVat">&pound;0.00</span>
-        </div>
-        <div class="totals__row totals__row--total">
-          <span>Total</span>
-          <span id="totalGrand">&pound;0.00</span>
-        </div>
-
-        <div class="totals__actions">
-          <button type="button" class="btn btn--ghost" id="exportBtn">Export to Excel</button>
-          <button type="button" class="btn btn--primary btn--wide" id="submitBtn">Email requisition</button>
-        </div>
-
-        <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
       </div>
-    </div>
-  </section>
 
-</form>
+      <div class="panel">
+        <h2 class="panel__title">Order details</h2>
+        <div class="panel__body">
+          <label class="field">
+            <span>Business unit</span>
+            <select id="businessUnit">
+              <option value="">Select business unit&hellip;</option>
+            </select>
+          </label>
+          <div class="field-row">
+            <label class="field">
+              <span>Company no.</span>
+              <input type="text" id="businessUnitCoNo" readonly tabindex="-1">
+            </label>
+            <label class="field">
+              <span>VAT no.</span>
+              <input type="text" id="businessUnitVat" readonly tabindex="-1">
+            </label>
+          </div>
+          <div class="field-row">
+            <label class="field">
+              <span>Purchase order date</span>
+              <input type="date" id="poDate">
+            </label>
+            <label class="field">
+              <span>Delivery date</span>
+              <input type="date" id="deliveryDate">
+            </label>
+          </div>
+          <label class="field">
+            <span>Reference</span>
+            <input type="text" id="reference" placeholder="Project / job reference">
+          </label>
+        </div>
+      </div>
 
-<script src="script.js"></script>
+    </section>
+
+    <!-- ===================== LINE ITEMS ===================== -->
+    <section class="panel panel--wide">
+      <div class="panel__title-row">
+        <h2 class="panel__title">Line items</h2>
+        <button type="button" class="btn btn--primary" id="addItemBtn">+ Add item</button>
+      </div>
+
+      <div class="items-table-wrap">
+        <table class="items-table" id="itemsTable">
+          <thead>
+            <tr>
+              <th class="col-desc">Description</th>
+              <th class="col-cost-type">Cost type</th>
+              <th class="col-recovery">Recovery from client</th>
+              <th class="col-recovery-details">Details of recovery</th>
+              <th class="col-reason">Reason for non-recovery</th>
+              <th class="col-qty">Qty</th>
+              <th class="col-price">Unit price</th>
+              <th class="col-net">Net</th>
+              <th class="col-vat">VAT</th>
+              <th class="col-remove"><span class="sr-only">Remove</span></th>
+            </tr>
+          </thead>
+          <tbody id="itemsTableBody">
+            <!-- rows injected by script.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <p class="hint">VAT is calculated per line at the standard rate (20%), or left at &pound;0.00 if the vendor isn't
+        VAT registered. Add as many items as you need &mdash; totals update automatically. If recovery from client is
+        Yes, the recovery details are required; if No, those fields are disabled.</p>
+    </section>
+
+    <!-- ===================== TOTALS ===================== -->
+    <section class="grid-2">
+      <div class="panel">
+        <h2 class="panel__title">Delivery details</h2>
+        <div class="panel__body">
+          <label class="field">
+            <span>Delivery address</span>
+            <textarea id="deliveryAddress" rows="3" placeholder="Street, town, postcode"></textarea>
+          </label>
+          <label class="field">
+            <span>For the attention of</span>
+            <input type="text" id="deliveryAttention" placeholder="Recipient name / department">
+          </label>
+          <label class="field">
+            <span>Email</span>
+            <input type="email" id="deliveryEmail" placeholder="site@chpk.co.uk">
+          </label>
+          <label class="field">
+            <span>Delivery instructions</span>
+            <textarea id="deliveryInstructions" rows="3"
+              placeholder="Access notes, goods-in hours, contact on arrival&hellip;"></textarea>
+          </label>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h2 class="panel__title">Totals</h2>
+        <div class="panel__body totals">
+          <div class="totals__row">
+            <span>Subtotal</span>
+            <span id="totalSubtotal">&pound;0.00</span>
+          </div>
+          <div class="totals__row totals__row--input">
+            <label for="deliveryCost">Delivery cost</label>
+            <div class="totals__input">
+              <span class="totals__currency">&pound;</span>
+              <input type="number" id="deliveryCost" min="0" step="0.01" value="0.00">
+            </div>
+          </div>
+          <div class="totals__row">
+            <span id="vatLabel">VAT (20%)</span>
+            <span id="totalVat">&pound;0.00</span>
+
+            <div class="po-header__meta">
+              <label class="field field--compact">
+                <span style="color: black;">VAT Registered?</span>
+                <select id="vatRegistered">
+                  <option value="yes" selected>Yes</option>
+                  <option value="no">No</option>
+                </select>
+              </label>
+            </div>
+          </div>
+          <div class="totals__row totals__row--total">
+            <span>Total</span>
+            <span id="totalGrand">&pound;0.00</span>
+          </div>
+
+          <div class="totals__actions">
+            <button type="button" class="btn btn--ghost" id="exportBtn">Export to Excel</button>
+            <button type="button" class="btn btn--primary btn--wide" id="submitBtn">Send for approval</button>
+          </div>
+
+          <p id="statusMessage" class="status-message" role="status" aria-live="polite"></p>
+        </div>
+      </div>
+    </section>
+
+  </form>
+
+  <script src="script.js"></script>
 </body>
+
 </html>

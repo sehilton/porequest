@@ -1,28 +1,56 @@
 # Purchase Order Requisition Form — Netlify edition
 
-A purchase order requisition form: fill it out in the browser, **email a PDF
-of it to finance**, or **export it to Excel**. Runs natively on Netlify —
-static frontend + Netlify Functions, no server to manage.
+A purchase order requisition form: fill it out in the browser, **send it to
+your line manager for approval** (who approves or denies it by email), or
+**export it to Excel**. Runs natively on Netlify — static frontend +
+Netlify Functions, no server to manage.
+
+## Approval flow
+
+1. The requester fills in their name, email, and their line manager's
+   email, then clicks **Send for approval**. This does *not* email finance
+   yet — it emails the approver a PDF of the requisition plus **Approve**
+   and **Deny** buttons, and saves the submission to the `requisitions`
+   Blobs store (status `pending`) so those links have something to act on.
+2. **Approve** → finance@chpk.co.uk is emailed the PDF; status becomes
+   `approved`.
+3. **Deny** → the link opens a small page asking for a reason. Submitting
+   it emails the requester *and* finance@chpk.co.uk with the reason;
+   status becomes `denied`.
+4. Every one of these emails is sent with the requester's own name and
+   email address in the **From** field (see the Resend domain note below —
+   this only works if the requester's email domain is verified in Resend).
+5. Approve/deny links are single-use: once a decision has been recorded,
+   re-clicking either link shows an "already approved/denied" page instead
+   of sending duplicate emails.
 
 ## Structure
 
 - **Frontend** — `public/index.html`, `public/styles.css`, `public/script.js`.
 - **Backend** — Netlify Functions in `netlify/functions/`.
-- **Storage** — [Netlify Blobs](https://docs.netlify.com/build/data-and-storage/netlify-blobs/)
-  for Excel exports only (see below). Nothing is stored in a database —
-  submitting the form emails a PDF instead.
+- **Storage** — [Netlify Blobs](https://docs.netlify.com/build/data-and-storage/netlify-blobs/):
+  the `requisitions` store holds pending/approved/denied submissions (so
+  the approve/deny links have something to look up), and the `uploads`
+  store holds Excel exports.
 
 ## Routes
 
 | Route | Function | What it does |
 |---|---|---|
-| `POST /api/submit` | `submit.mjs` | Builds a PDF of the form and emails it to `finance@chpk.co.uk` via [Resend](https://resend.com) |
+| `POST /api/submit` | `submit.mjs` | Builds a PDF, saves the requisition as `pending`, and emails the approver a PDF + Approve/Deny links via [Resend](https://resend.com) |
+| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, emails finance; on deny, shows a reason form and then emails the requester + finance |
+| `GET /api/submissions` | `submissions.mjs` | Lists the 50 most recent requisitions (id, status, requester, vendor, total, …) from the `requisitions` store |
 | `POST /api/export` | `export.mjs` | Builds an `.xlsx` and saves it to the `uploads` Blobs store |
 | `GET /api/download/:filename` | `download.mjs` | Streams a saved export back to the browser |
 
 `netlify/functions/_shared/` holds the building blocks, all dependency-free
-(no npm packages beyond `@netlify/blobs`, used only by `export.mjs` and
-`download.mjs`):
+(no npm packages beyond `@netlify/blobs`, used by `requisition-store.mjs`,
+`export.mjs`, and `download.mjs`):
+
+- `requisition-store.mjs` — reads/writes the `requisitions` Blobs store:
+  creates a `pending` record with a random id + bearer token when a
+  requisition is submitted, and flips it to `approved`/`denied` once a
+  decision is made.
 
 - `pdf-writer.cjs` — low-level PDF assembly (objects, xref table, text
   layout with the standard Helvetica metrics hardcoded in). Deliberately
@@ -46,21 +74,25 @@ one. This project calls [Resend](https://resend.com)'s API directly.
 
 1. Create a free Resend account and an API key.
 2. **Verify a domain in Resend** (Resend → Domains → Add Domain, then add
-   the DNS records they give you). This step matters: Resend's own sandbox
-   sender (`onboarding@resend.dev`) only delivers to the *email address on
-   your Resend account* — it will silently fail to reach
-   `finance@chpk.co.uk` unless that happens to be the account's own email.
-   A verified domain is what lets you send to arbitrary recipients.
+   the DNS records they give you). This step matters more than usual here:
+   every email this app sends — to the approver, to finance, to the
+   requester on denial — is sent with **the requester's own address as the
+   From header** (see Approval flow above), not a single fixed sender. For
+   that to deliver, the *requester's* email domain has to be verified in
+   Resend — for CHPK staff that's `chpk.co.uk`, the same domain
+   `finance@chpk.co.uk` already lives on. Resend's sandbox sender
+   (`onboarding@resend.dev`) can't be substituted here since the From
+   address is a real per-submission requester address, not a fixed
+   sandbox one.
 3. In the Netlify UI: **Site configuration → Environment variables**, add:
    - `RESEND_API_KEY` — the key from step 1.
-   - `REQUISITION_FROM_EMAIL` — a from-address on your verified domain,
-     e.g. `requisitions@yourdomain.com`. If you skip this, it defaults to
-     Resend's sandbox address, which — per the point above — won't
-     actually reach finance in production.
+   - `REQUISITION_FROM_EMAIL` — a fallback from-address on your verified
+     domain, only used if a submission somehow arrives without a requester
+     email (shouldn't happen — the field is required client-side).
 4. Redeploy (environment variable changes need a new deploy to take
    effect).
 
-Without `RESEND_API_KEY` set, clicking **Email requisition** returns a
+Without `RESEND_API_KEY` set, clicking **Send for approval** returns a
 clear error explaining what's missing, rather than failing silently.
 
 ## Business rules built into the form
@@ -95,10 +127,10 @@ the "not configured" error locally, which is expected without a key.
 
 ## If you need a record of what was submitted
 
-Since submissions are emailed rather than stored, the email inbox at
-`finance@chpk.co.uk` (and Resend's own dashboard, which logs sent emails
-and their attachments) is the record. If you later want a searchable
-history inside the app as well, the Blobs-based approach from the previous
-version of this project (a `requisitions` store, one JSON record per
-submission) can be added back alongside the email — ask and it can be
-layered in without touching the PDF/email logic.
+Every submission is saved as a JSON record in the `requisitions` Blobs
+store (`requisition-store.mjs`), with a `status` of `pending`, `approved`,
+or `denied`. `GET /api/submissions` lists the 50 most recent. The email
+inboxes at the approver's address and `finance@chpk.co.uk` (plus Resend's
+own dashboard, which logs sent emails and their attachments) are the other
+record — the PDF isn't stored on its own, it's rebuilt from the saved JSON
+whenever an approve/deny email needs to be sent.

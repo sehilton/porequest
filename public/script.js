@@ -281,6 +281,9 @@
     return {
       header: {
         poNumber: fieldValue("poNumber"),
+        requesterName: fieldValue("requesterName"),
+        requesterEmail: fieldValue("requesterEmail"),
+        approverEmail: fieldValue("approverEmail"),
         vatRegistered: fieldValue("vatRegistered"),
         vendorName: fieldValue("vendorName"),
         vendorAddress: fieldValue("vendorAddress"),
@@ -324,6 +327,32 @@
     button.textContent = busy ? busyLabel : idleLabel;
   }
 
+  // Reads the response as text first rather than calling response.json()
+  // directly, so a non-JSON or empty body (a server crash, a proxy error
+  // page, a timeout) surfaces as a readable message instead of a cryptic
+  // "Unexpected end of JSON input" from the browser's JSON parser.
+  function parseJsonResponse(response, fallbackMessage) {
+    return response.text().then(function (text) {
+      var body = null;
+      if (text) {
+        try {
+          body = JSON.parse(text);
+        } catch (err) {
+          body = null;
+        }
+      }
+
+      if (!response.ok || !body || !body.ok) {
+        var message = body && body.error
+          ? body.error
+          : fallbackMessage + " (server responded " + response.status + (text ? ": " + text.slice(0, 200) : " with an empty response") + ")";
+        throw new Error(message);
+      }
+
+      return body;
+    });
+  }
+
   /* ---------------------------------------------------------------
      Submit (build a PDF and email it to finance)
      --------------------------------------------------------------- */
@@ -335,7 +364,7 @@
     }
 
     var payload = getFormData();
-    setBusy(submitBtn, true, "Sending\u2026", "Email requisition");
+    setBusy(submitBtn, true, "Sending\u2026", "Send for approval");
 
     fetch("/api/submit", {
       method: "POST",
@@ -343,21 +372,16 @@
       body: JSON.stringify(payload)
     })
       .then(function (response) {
-        return response.json().then(function (body) {
-          if (!response.ok || !body.ok) {
-            throw new Error(body.error || "Could not email the requisition.");
-          }
-          return body;
-        });
+        return parseJsonResponse(response, "Could not send the requisition for approval.");
       })
       .then(function (body) {
-        showStatus("success", "Emailed the requisition to " + body.sentTo + ".");
+        showStatus("success", "Sent to " + body.sentTo + " for approval.");
       })
       .catch(function (err) {
-        showStatus("error", err.message || "Something went wrong emailing the form.");
+        showStatus("error", err.message || "Something went wrong sending the form.");
       })
       .finally(function () {
-        setBusy(submitBtn, false, "Sending\u2026", "Email requisition");
+        setBusy(submitBtn, false, "Sending\u2026", "Send for approval");
       });
   }
 
@@ -380,12 +404,7 @@
       body: JSON.stringify(payload)
     })
       .then(function (response) {
-        return response.json().then(function (body) {
-          if (!response.ok || !body.ok) {
-            throw new Error(body.error || "Could not export the spreadsheet.");
-          }
-          return body;
-        });
+        return parseJsonResponse(response, "Could not export the spreadsheet.");
       })
       .then(function (body) {
         var safeName = body.filename.replace(/</g, "&lt;");

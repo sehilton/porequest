@@ -14,6 +14,9 @@ export function formDataToRows(data) {
   var rows = [];
   rows.push(["PURCHASE ORDER REQUISITION FORM"]);
   rows.push([]);
+  rows.push(["Requested by", header.requesterName || "", "Email", header.requesterEmail || ""]);
+  rows.push(["Approver email", header.approverEmail || ""]);
+  rows.push([]);
   rows.push(["PO number", header.poNumber || "", "", "VAT registered?", header.vatRegistered || ""]);
   rows.push([]);
   rows.push(["Vendor name", header.vendorName || ""]);
