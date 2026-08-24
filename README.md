@@ -15,8 +15,9 @@ Netlify Functions, no server to manage.
 2. **Approve** → finance@chpk.co.uk is emailed the PDF; status becomes
    `approved`.
 3. **Deny** → the link opens a small page asking for a reason. Submitting
-   it emails the requester *and* finance@chpk.co.uk with the reason;
-   status becomes `denied`.
+   it emails the requester with the reason (finance is not copied — they
+   only hear about a requisition once it's approved); status becomes
+   `denied`.
 4. Every one of these emails is sent with the requester's own name and
    email address in the **From** field (see the Resend domain note below —
    this only works if the requester's email domain is verified in Resend).
@@ -38,7 +39,7 @@ Netlify Functions, no server to manage.
 | Route | Function | What it does |
 |---|---|---|
 | `POST /api/submit` | `submit.mjs` | Builds a PDF, saves the requisition as `pending`, and emails the approver a PDF + Approve/Deny links via [Resend](https://resend.com) |
-| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, emails finance; on deny, shows a reason form and then emails the requester + finance |
+| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, emails finance; on deny, shows a reason form and then emails the requester only |
 | `GET /api/submissions` | `submissions.mjs` | Lists the 50 most recent requisitions (id, status, requester, vendor, total, …) from the `requisitions` store |
 | `POST /api/export` | `export.mjs` | Builds an `.xlsx` and saves it to the `uploads` Blobs store |
 | `GET /api/download/:filename` | `download.mjs` | Streams a saved export back to the browser |

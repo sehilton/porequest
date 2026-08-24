@@ -88,7 +88,7 @@ async function sendDenyEmails(record, reason) {
   var fromHeader = (header.requesterName || "Requisition") + " <" + header.requesterEmail + ">";
 
   await sendPdfEmail({
-    to: [header.requesterEmail, FINANCE_EMAIL].filter(Boolean),
+    to: header.requesterEmail,
     from: fromHeader,
     replyTo: header.requesterEmail,
     subject:
@@ -195,7 +195,7 @@ async function handleDecision(req) {
     return page(
       200,
       "Requisition denied",
-      "<h1>Requisition denied</h1><p>The requester and " + esc(FINANCE_EMAIL) + " have been notified.</p>"
+      "<h1>Requisition denied</h1><p>The requester has been notified.</p>"
     );
   }
 
