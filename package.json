@@ -1,0 +1,14 @@
+{
+  "name": "po-requisition-form",
+  "version": "1.0.0",
+  "description": "Purchase order requisition form with SQLite persistence and Excel export, built with zero external dependencies.",
+  "main": "server.js",
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "scripts": {
+    "start": "node server.js"
+  },
+  "license": "UNLICENSED",
+  "private": true
+}
