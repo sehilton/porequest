@@ -269,6 +269,12 @@
     statusMessage.className = "status-message status-message--" + kind + " is-visible";
   }
 
+  function showStatusHtml(kind, html) {
+    if (!statusMessage) return;
+    statusMessage.innerHTML = html;
+    statusMessage.className = "status-message status-message--" + kind + " is-visible";
+  }
+
   function setBusy(button, busy, busyLabel, idleLabel) {
     button.disabled = busy;
     button.textContent = busy ? busyLabel : idleLabel;
@@ -328,7 +334,11 @@
         });
       })
       .then(function (body) {
-        showStatus("success", "Saved " + body.filename + " to the uploads folder.");
+        var safeName = body.filename.replace(/</g, "&lt;");
+        var link = body.downloadUrl
+          ? ' <a href="' + body.downloadUrl + '" target="_blank" rel="noopener">Download it here.</a>'
+          : "";
+        showStatusHtml("success", "Saved " + safeName + " to storage." + link);
       })
       .catch(function (err) {
         showStatus("error", err.message || "Something went wrong exporting the form.");

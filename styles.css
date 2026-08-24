@@ -33,7 +33,6 @@
 
 html {
   -webkit-text-size-adjust: 100%;
-  text-size-adjust: 100%;
 }
 
 body {
@@ -49,7 +48,7 @@ body {
 }
 
 .sheet {
-  max-width: 1380px;
+  max-width: 1080px;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
@@ -505,6 +504,12 @@ body {
   background: #E7F3EA;
   color: #2A6B3D;
   border: 1px solid #BEDFC6;
+}
+
+.status-message a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
 }
 
 .status-message--error {

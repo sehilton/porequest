@@ -1,14 +1,12 @@
 {
   "name": "po-requisition-form",
-  "version": "1.0.0",
-  "description": "Purchase order requisition form with SQLite persistence and Excel export, built with zero external dependencies.",
-  "main": "server.js",
-  "engines": {
-    "node": ">=22.5.0"
-  },
+  "version": "2.0.0",
+  "private": true,
+  "description": "Purchase order requisition form on Netlify: static frontend + Netlify Functions + Netlify Blobs storage.",
   "scripts": {
-    "start": "node server.js"
+    "dev": "netlify dev"
   },
-  "license": "UNLICENSED",
-  "private": true
+  "dependencies": {
+    "@netlify/blobs": "^10.7.8"
+  }
 }
