@@ -1,6 +1,6 @@
 "use strict";
 
-const { createPageCanvas, assemblePdf, wrapText, textWidth } = require("./pdf-writer.cjs");
+const { createPageCanvas, assemblePdf, wrapText, textWidth } = require("../pdf-writer.cjs");
 
 var PAGE_W = 595.28;
 var PAGE_H = 841.89;
