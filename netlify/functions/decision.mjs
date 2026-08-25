@@ -124,7 +124,8 @@ async function handleDecision(req) {
     id = (form.get("id") || id).toString();
     token = (form.get("token") || token).toString();
     reason = (form.get("reason") || "").toString().trim();
-    action = "deny-submit";
+    var formAction = (form.get("action") || "").toString();
+    action = formAction === "approve" ? "approve-submit" : "deny-submit";
   } else if (req.method !== "GET") {
     return page(405, "Requisition", "<h1>Method not allowed</h1>");
   }
@@ -158,12 +159,44 @@ async function handleDecision(req) {
   }
 
   if (action === "approve") {
+    // A plain GET only shows a confirmation page — it must not perform the
+    // approval itself, since email providers and corporate security
+    // gateways (Safe Links, Proofpoint, Mimecast, link previews, etc.)
+    // routinely prefetch every link in an email to scan it, which would
+    // otherwise trigger the approval before anyone actually clicks it.
+    var approveBodyHtml =
+      "<h1>Approve requisition</h1>" +
+      "<p>From " + esc(header.requesterName || "—") +
+      (header.requesterEmail ? " (" + esc(header.requesterEmail) + ")" : "") +
+      " for " + esc(header.vendorName || "—") + ".</p>" +
+      summaryTable(header, record.data.totals || {}) +
+      "<form method=\"POST\" action=\"/api/decision\">" +
+      "<input type=\"hidden\" name=\"id\" value=\"" + esc(id) + "\">" +
+      "<input type=\"hidden\" name=\"token\" value=\"" + esc(token) + "\">" +
+      "<input type=\"hidden\" name=\"action\" value=\"approve\">" +
+      "<button type=\"submit\">Confirm approve</button>" +
+      "</form>";
+    return page(200, "Approve requisition", approveBodyHtml);
+  }
+
+  if (action === "approve-submit") {
+    // Status is flipped to "approved" before the email is sent (and the
+    // "already <status>" check above runs on a fresh read for every
+    // request), so two near-simultaneous submissions — a real click plus
+    // a security-scanner fetch, a double form submission, a network retry
+    // — can't both slip past the pending check and send twice.
+    await setRequisitionStatus(id, "approved");
     try {
       await sendApprovalEmailToRequester(record);
     } catch (err) {
-      return page(502, "Requisition", "<h1>Could not notify the requester</h1><p>" + esc(err.message) + "</p>");
+      return page(
+        502,
+        "Requisition",
+        "<h1>Approved, but could not email the requester</h1><p>" + esc(err.message) + "</p>" +
+        "<p>The requisition is recorded as approved. Please let " + esc(header.requesterName || "the requester") +
+        " know directly, and ask them to forward the requisition PDF to " + esc(FINANCE_EMAIL) + ".</p>"
+      );
     }
-    await setRequisitionStatus(id, "approved");
     return page(
       200,
       "Requisition approved",
@@ -184,6 +217,7 @@ async function handleDecision(req) {
       "<form method=\"POST\" action=\"/api/decision\">" +
       "<input type=\"hidden\" name=\"id\" value=\"" + esc(id) + "\">" +
       "<input type=\"hidden\" name=\"token\" value=\"" + esc(token) + "\">" +
+      "<input type=\"hidden\" name=\"action\" value=\"deny\">" +
       "<label for=\"reason\">Reason for denial</label>" +
       "<textarea id=\"reason\" name=\"reason\" placeholder=\"Let the requester know why…\" required></textarea>" +
       "<button type=\"submit\">Confirm deny</button>" +
@@ -192,12 +226,12 @@ async function handleDecision(req) {
   }
 
   if (action === "deny-submit") {
+    await setRequisitionStatus(id, "denied", { denyReason: reason });
     try {
       await sendDenyEmails(record, reason);
     } catch (err) {
       return page(502, "Requisition", "<h1>Could not send the denial email</h1><p>" + esc(err.message) + "</p>");
     }
-    await setRequisitionStatus(id, "denied", { denyReason: reason });
     return page(
       200,
       "Requisition denied",
