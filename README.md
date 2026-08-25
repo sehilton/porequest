@@ -8,19 +8,20 @@ Netlify Functions, no server to manage.
 ## Approval flow
 
 1. The requester fills in their name, email, and their line manager's
-   email, then clicks **Send for approval**. This does *not* email finance
-   yet — it emails the approver a PDF of the requisition plus **Approve**
-   and **Deny** buttons, and saves the submission to the `requisitions`
-   Blobs store (status `pending`) so those links have something to act on.
-2. **Approve** → finance@chpk.co.uk is emailed the PDF; status becomes
-   `approved`.
+   email, then clicks **Send for approval**. This emails the approver a PDF
+   of the requisition plus **Approve** and **Deny** buttons, and saves the
+   submission to the `requisitions` Blobs store (status `pending`) so
+   those links have something to act on.
+2. **Approve** → status becomes `approved`. finance@chpk.co.uk is *not*
+   emailed automatically — the approve confirmation page tells whoever
+   clicked it to forward the requisition PDF (attached to the approval
+   email they received) to finance themselves. Finance asked not to be
+   copied on the automated emails at all.
 3. **Deny** → the link opens a small page asking for a reason. Submitting
-   it emails the requester with the reason (finance is not copied — they
-   only hear about a requisition once it's approved); status becomes
-   `denied`.
-4. Every one of these emails is sent with the requester's own name and
-   email address in the **From** field (see the Resend domain note below —
-   this only works if the requester's email domain is verified in Resend).
+   it emails the requester with the reason; status becomes `denied`.
+4. Every email is sent with the requester's own name and email address in
+   the **From** field (see the Resend domain note below — this only works
+   if the requester's email domain is verified in Resend).
 5. Approve/deny links are single-use: once a decision has been recorded,
    re-clicking either link shows an "already approved/denied" page instead
    of sending duplicate emails.
@@ -39,7 +40,7 @@ Netlify Functions, no server to manage.
 | Route | Function | What it does |
 |---|---|---|
 | `POST /api/submit` | `submit.mjs` | Builds a PDF, saves the requisition as `pending`, and emails the approver a PDF + Approve/Deny links via [Resend](https://resend.com) |
-| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, emails finance; on deny, shows a reason form and then emails the requester only |
+| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, shows a page telling the clicker to forward the PDF to finance themselves; on deny, shows a reason form and then emails the requester |
 | `GET /api/submissions` | `submissions.mjs` | Lists the 50 most recent requisitions (id, status, requester, vendor, total, …) from the `requisitions` store |
 | `POST /api/export` | `export.mjs` | Builds an `.xlsx` and saves it to the `uploads` Blobs store |
 | `GET /api/download/:filename` | `download.mjs` | Streams a saved export back to the browser |
@@ -76,12 +77,11 @@ one. This project calls [Resend](https://resend.com)'s API directly.
 1. Create a free Resend account and an API key.
 2. **Verify a domain in Resend** (Resend → Domains → Add Domain, then add
    the DNS records they give you). This step matters more than usual here:
-   every email this app sends — to the approver, to finance, to the
-   requester on denial — is sent with **the requester's own address as the
-   From header** (see Approval flow above), not a single fixed sender. For
-   that to deliver, the *requester's* email domain has to be verified in
-   Resend — for CHPK staff that's `chpk.co.uk`, the same domain
-   `finance@chpk.co.uk` already lives on. Resend's sandbox sender
+   every email this app sends — to the approver, to the requester on
+   denial — is sent with **the requester's own address as the From
+   header** (see Approval flow above), not a single fixed sender. For that
+   to deliver, the *requester's* email domain has to be verified in Resend
+   — for CHPK staff that's `chpk.co.uk`. Resend's sandbox sender
    (`onboarding@resend.dev`) can't be substituted here since the From
    address is a real per-submission requester address, not a fixed
    sandbox one.
@@ -131,7 +131,9 @@ the "not configured" error locally, which is expected without a key.
 Every submission is saved as a JSON record in the `requisitions` Blobs
 store (`requisition-store.mjs`), with a `status` of `pending`, `approved`,
 or `denied`. `GET /api/submissions` lists the 50 most recent. The email
-inboxes at the approver's address and `finance@chpk.co.uk` (plus Resend's
-own dashboard, which logs sent emails and their attachments) are the other
-record — the PDF isn't stored on its own, it's rebuilt from the saved JSON
-whenever an approve/deny email needs to be sent.
+inbox at the approver's address (plus Resend's own dashboard, which logs
+sent emails and their attachments) is the other record — the PDF isn't
+stored on its own, it's rebuilt from the saved JSON whenever a denial
+email needs to be sent. Finance never receives an automated email in this
+flow; once approved, forwarding the PDF to finance is a manual step (see
+Approval flow above).
