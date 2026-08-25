@@ -591,3 +591,304 @@ body {
   background-color: blue !important;
   border: 1px black solid;
 }
+
+/* ===================== HELP LINK (index.html) ===================== */
+
+.help-link-bar {
+  max-width: 1480px;
+  margin: 0 auto 16px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.help-link-bar a {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--navy);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 2px;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s ease, color 0.15s ease;
+}
+
+.help-link-bar a:hover {
+  border-color: var(--gold);
+  color: var(--navy-deep);
+}
+
+/* ===================== HOW-TO-USE PAGE (how-to-use.html) ===================== */
+
+.doc-page {
+  max-width: 1040px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.doc-back-link {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--navy);
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.doc-back-link:hover {
+  color: var(--navy-deep);
+}
+
+.doc-lede {
+  max-width: 68ch;
+  font-size: 16px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.doc-lede strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.diagram-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-sm);
+  padding: 28px 20px 8px;
+}
+
+.diagram-card svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.diagram-card figure {
+  margin: 0;
+}
+
+.diagram-card figcaption {
+  font-size: 13.5px;
+  color: var(--ink-soft);
+  padding: 18px 8px 6px;
+  border-top: 1px solid var(--line);
+  margin-top: 22px;
+  max-width: 74ch;
+}
+
+/* flow diagram SVG styling */
+
+.lane-header {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  fill: var(--muted);
+}
+
+.lane-rule {
+  stroke: var(--line-strong);
+  stroke-width: 1.4;
+}
+
+.lane-divider {
+  stroke: var(--line);
+  stroke-width: 1.2;
+  stroke-dasharray: 3 5;
+}
+
+.flow-box {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 1.5;
+}
+
+.flow-box--dashed {
+  stroke: var(--muted);
+  stroke-dasharray: 5 4;
+}
+
+.flow-box--muted {
+  stroke: var(--line-strong);
+}
+
+.flow-diamond {
+  fill: var(--surface);
+  stroke: var(--navy);
+  stroke-width: 1.7;
+}
+
+.accent-strip--gold {
+  fill: var(--gold);
+}
+
+.accent-strip--danger {
+  fill: var(--danger);
+}
+
+.flow-title {
+  font-family: var(--font-body);
+  font-weight: 600;
+  fill: var(--ink);
+}
+
+.flow-sub {
+  font-family: var(--font-body);
+  font-weight: 400;
+  fill: var(--ink-soft);
+}
+
+.flow-mono {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  fill: var(--ink-soft);
+}
+
+.flow-label {
+  font-family: var(--font-mono);
+  font-weight: 500;
+  fill: var(--ink-soft);
+}
+
+.flow-label--gold {
+  fill: var(--gold);
+}
+
+.flow-label--danger {
+  fill: var(--danger);
+}
+
+.flow-diamond-label {
+  font-family: var(--font-body);
+  font-weight: 600;
+  fill: var(--ink);
+}
+
+.flow-line {
+  stroke: var(--ink-soft);
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.flow-line--gold {
+  stroke: var(--gold);
+}
+
+.flow-line--danger {
+  stroke: var(--danger);
+}
+
+.flow-line--dashed {
+  stroke: var(--muted);
+  stroke-dasharray: 5 4;
+}
+
+.marker-ink {
+  fill: var(--ink-soft);
+}
+
+.marker-gold {
+  fill: var(--gold);
+}
+
+.marker-danger {
+  fill: var(--danger);
+}
+
+.marker-muted {
+  fill: var(--muted);
+}
+
+.doc-legend {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px 28px;
+  margin: 0;
+  padding: 0;
+}
+
+.doc-legend li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 12.5px;
+  color: var(--ink-soft);
+}
+
+.doc-legend .swatch {
+  width: 22px;
+  height: 0;
+  border-top: 2.5px solid var(--ink-soft);
+  display: inline-block;
+}
+
+.doc-legend .swatch--gold {
+  border-color: var(--gold);
+}
+
+.doc-legend .swatch--danger {
+  border-color: var(--danger);
+}
+
+.doc-legend .swatch--muted {
+  border-color: var(--muted);
+  border-top-style: dashed;
+}
+
+.panel ul.plain-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.panel ul.plain-list li {
+  font-size: 14px;
+  color: var(--ink-soft);
+  padding-left: 16px;
+  position: relative;
+}
+
+.panel ul.plain-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 8px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--gold);
+}
+
+.panel ul.plain-list li strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+.panel ul.plain-list code {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  background: var(--gold-soft);
+  color: var(--navy-deep);
+  padding: 1px 6px;
+  border-radius: 3px;
+}
+
+@media (max-width: 760px) {
+  .doc-page {
+    padding: 0 4px;
+  }
+}
