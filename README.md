@@ -12,11 +12,10 @@ Netlify Functions, no server to manage.
    of the requisition plus **Approve** and **Deny** buttons, and saves the
    submission to the `requisitions` Blobs store (status `pending`) so
    those links have something to act on.
-2. **Approve** → status becomes `approved`. finance@chpk.co.uk is *not*
-   emailed automatically — the approve confirmation page tells whoever
-   clicked it to forward the requisition PDF (attached to the approval
-   email they received) to finance themselves. Finance asked not to be
-   copied on the automated emails at all.
+2. **Approve** → status becomes `approved`, and the **requester** (not the
+   approver) is emailed the PDF and asked to forward it to
+   finance@chpk.co.uk themselves — finance is never emailed automatically
+   by this app, at their request.
 3. **Deny** → the link opens a small page asking for a reason. Submitting
    it emails the requester with the reason; status becomes `denied`.
 4. Every email is sent with the requester's own name and email address in
@@ -40,7 +39,7 @@ Netlify Functions, no server to manage.
 | Route | Function | What it does |
 |---|---|---|
 | `POST /api/submit` | `submit.mjs` | Builds a PDF, saves the requisition as `pending`, and emails the approver a PDF + Approve/Deny links via [Resend](https://resend.com) |
-| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, shows a page telling the clicker to forward the PDF to finance themselves; on deny, shows a reason form and then emails the requester |
+| `GET/POST /api/decision` | `decision.mjs` | Handles an Approve/Deny link click: on approve, emails the requester the PDF and asks them to forward it to finance; on deny, shows a reason form and then emails the requester with the reason |
 | `GET /api/submissions` | `submissions.mjs` | Lists the 50 most recent requisitions (id, status, requester, vendor, total, …) from the `requisitions` store |
 | `POST /api/export` | `export.mjs` | Builds an `.xlsx` and saves it to the `uploads` Blobs store |
 | `GET /api/download/:filename` | `download.mjs` | Streams a saved export back to the browser |

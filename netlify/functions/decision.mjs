@@ -56,6 +56,35 @@ function pdfFilename(header) {
   return "requisition-" + poPart + "-" + new Date().toISOString().replace(/[:.]/g, "-") + ".pdf";
 }
 
+async function sendApprovalEmailToRequester(record) {
+  var header = record.data.header || {};
+  var pdfBuffer = buildRequisitionPdf(record.data);
+  var fromHeader = (header.requesterName || "Requisition") + " <" + header.requesterEmail + ">";
+
+  await sendPdfEmail({
+    to: header.requesterEmail,
+    from: fromHeader,
+    replyTo: header.requesterEmail,
+    subject:
+      "Approved: purchase order requisition" +
+      (header.vendorName ? " — " + header.vendorName : "") +
+      (header.poNumber ? " (" + header.poNumber + ")" : ""),
+    html:
+      "<div style=\"font-family: Arial, sans-serif; font-size: 14px; color: #1E2433;\">" +
+      "<h2 style=\"margin: 0 0 12px;\">Purchase order requisition approved</h2>" +
+      "<p style=\"margin: 0 0 12px; color: #4B5163;\">" +
+      esc(header.approverEmail || "Your line manager") +
+      " approved this requisition. The full form is attached as a PDF.</p>" +
+      "<p style=\"margin: 0 0 16px;\"><strong>Next step:</strong> please forward the attached PDF to " +
+      "<strong>" + esc(FINANCE_EMAIL) + "</strong> yourself to complete the process — it is not sent " +
+      "there automatically.</p>" +
+      summaryTable(header, record.data.totals || {}) +
+      "</div>",
+    pdfBuffer: pdfBuffer,
+    filename: pdfFilename(header)
+  });
+}
+
 async function sendDenyEmails(record, reason) {
   var header = record.data.header || {};
   var pdfBuffer = buildRequisitionPdf(record.data);
@@ -129,15 +158,19 @@ async function handleDecision(req) {
   }
 
   if (action === "approve") {
+    try {
+      await sendApprovalEmailToRequester(record);
+    } catch (err) {
+      return page(502, "Requisition", "<h1>Could not notify the requester</h1><p>" + esc(err.message) + "</p>");
+    }
     await setRequisitionStatus(id, "approved");
     return page(
       200,
       "Requisition approved",
       "<h1>Requisition approved</h1>" +
-      "<p>This requisition has been approved.</p>" +
-      "<p><strong>Next step:</strong> finance is not emailed automatically — please forward the " +
-      "requisition PDF (attached to the approval email you received) to <strong>" + esc(FINANCE_EMAIL) +
-      "</strong> yourself to complete the process.</p>"
+      "<p>This requisition has been approved. " + esc(header.requesterName || "The requester") +
+      " has been emailed the PDF and asked to forward it to " + esc(FINANCE_EMAIL) +
+      " themselves — finance is not emailed automatically.</p>"
     );
   }
 
